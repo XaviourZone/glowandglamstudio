@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UploadCloud, CheckCircle2, AlertCircle, Loader2, Package, Image as ImageIcon, Settings2, Plus, Trash2, Save, ArrowLeft, FolderOpen, FileEdit, Info } from 'lucide-react';
+import { ShieldCheck, UploadCloud, CheckCircle2, AlertCircle, Loader2, Package, Image as ImageIcon, Settings2, Plus, Trash2, Save, ArrowLeft, FolderOpen, FileEdit, Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Layout';
 import initialPackagesData from '../data/packages.json';
@@ -22,6 +22,7 @@ const TARGET_FOLDERS = [
 export default function AdminUpload() {
   // Auth State
   const [token, setToken] = useState('');
+  const [targetBranch] = useState('main');
   const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null);
   const [showTokenHelp, setShowTokenHelp] = useState(false);
 
@@ -65,16 +66,22 @@ export default function AdminUpload() {
     }
   };
 
+  const fetchUploadFolderAssets = () => {
+    if (isTokenValid !== true) return;
+    fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${folder}?ref=${targetBranch}&t=${Date.now()}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    })
+    .then(res => res.ok ? res.json() : [])
+    .then(data => setUploadFolderAssets(Array.isArray(data) ? data : []))
+    .catch(() => setUploadFolderAssets([]));
+  };
+
   useEffect(() => {
     if (currentView === 'images' && assetView === 'upload' && isTokenValid === true) {
-      fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${folder}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-      })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setUploadFolderAssets(Array.isArray(data) ? data : []))
-      .catch(() => setUploadFolderAssets([]));
+      fetchUploadFolderAssets();
     }
-  }, [folder, currentView, assetView, isTokenValid, token]);
+  }, [folder, currentView, assetView, isTokenValid, targetBranch]);
 
   // --- ASSET MANAGER HANDLERS ---
   const processImageToWebP = (file: File): Promise<string> => {
@@ -149,7 +156,7 @@ export default function AdminUpload() {
           customName: customName
         };
       });
-      setUploadFiles(newFiles);
+      setUploadFiles([...uploadFiles, ...newFiles]); // Append instead of replace to allow multiple selections
       setStatus('idle');
       setMessage('');
     }
@@ -159,6 +166,10 @@ export default function AdminUpload() {
     const newFiles = [...uploadFiles];
     newFiles[index].customName = name;
     setUploadFiles(newFiles);
+  };
+
+  const handleRemoveUploadFile = (index: number) => {
+    setUploadFiles(uploadFiles.filter((_, i) => i !== index));
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -193,7 +204,7 @@ export default function AdminUpload() {
           safeFilename += `.${ext}`;
         }
         
-        const response = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${folder}/${safeFilename}`, {
+        const response = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${folder}/${safeFilename}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -202,7 +213,8 @@ export default function AdminUpload() {
           },
           body: JSON.stringify({
             message: `Admin Upload: Add ${safeFilename} to ${folder}`,
-            content: base64String
+            content: base64String,
+            branch: targetBranch
           })
         });
 
@@ -222,7 +234,7 @@ export default function AdminUpload() {
 
     if (failCount === 0) {
       setStatus('success');
-      setMessage(`Successfully uploaded ${successCount} asset${successCount > 1 ? 's' : ''}!`);
+      setMessage(`Successfully uploaded ${successCount} asset${successCount > 1 ? 's' : ''}! (Note: Changes take 1-3 minutes to appear on the live website.)`);
       setUploadFiles([]); 
     } else {
       setStatus('error');
@@ -239,8 +251,9 @@ export default function AdminUpload() {
     setMessage('');
     
     try {
-      const response = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${manageFolder}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      const response = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${manageFolder}?ref=${targetBranch}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-store'
       });
       if (response.ok) {
         const data = await response.json();
@@ -257,14 +270,14 @@ export default function AdminUpload() {
     if (currentView === 'images' && assetView === 'manage' && isTokenValid === true) {
       fetchAssets();
     }
-  }, [manageFolder, currentView, assetView, isTokenValid]);
+  }, [manageFolder, currentView, assetView, isTokenValid, targetBranch]);
 
   const handleDeleteAsset = async (asset: any) => {
     if (!window.confirm(`Are you sure you want to delete ${asset.name}? This cannot be undone.`)) return;
     setStatus('uploading');
     setMessage(`Deleting ${asset.name}...`);
     try {
-      const res = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${asset.path}`, {
+      const res = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${asset.path}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -273,12 +286,13 @@ export default function AdminUpload() {
         },
         body: JSON.stringify({
           message: `Admin: Delete ${asset.name}`,
-          sha: asset.sha
+          sha: asset.sha,
+          branch: targetBranch
         })
       });
       if (res.ok) {
         setStatus('success');
-        setMessage(`Deleted ${asset.name} successfully.`);
+        setMessage(`Deleted ${asset.name} successfully. (Note: Changes take 1-3 minutes to appear on the live website.)`);
         fetchAssets();
       } else {
         const err = await res.json();
@@ -302,8 +316,9 @@ export default function AdminUpload() {
     
     try {
       // 1. Fetch file as blob
-      const rawRes = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${asset.path}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3.raw' }
+      const rawRes = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${asset.path}?ref=${targetBranch}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3.raw' },
+        cache: 'no-store'
       });
       if (!rawRes.ok) throw new Error('Failed to fetch original file content.');
       const blob = await rawRes.blob();
@@ -322,7 +337,7 @@ export default function AdminUpload() {
         safeFilename += `.${ext}`;
       }
 
-      const putRes = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${manageFolder}/${safeFilename}`, {
+      const putRes = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${manageFolder}/${safeFilename}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -331,13 +346,14 @@ export default function AdminUpload() {
         },
         body: JSON.stringify({
           message: `Admin: Rename ${asset.name} to ${safeFilename}`,
-          content: base64String
+          content: base64String,
+          branch: targetBranch
         })
       });
       
       if (putRes.ok) {
         // 3. DELETE old file
-        await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/${asset.path}`, {
+        await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/${asset.path}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -346,12 +362,13 @@ export default function AdminUpload() {
           },
           body: JSON.stringify({
             message: `Admin: Delete old ${asset.name} after rename`,
-            sha: asset.sha
+            sha: asset.sha,
+            branch: targetBranch
           })
         });
         
         setStatus('success');
-        setMessage('Renamed successfully.');
+        setMessage('Renamed successfully. (Note: Changes take 1-3 minutes to appear on the live website.)');
         setEditingAssetSha(null);
         fetchAssets();
       } else {
@@ -365,14 +382,44 @@ export default function AdminUpload() {
   };
 
   // --- PACKAGE MANAGER HANDLERS ---
+  const fetchPackagesData = async () => {
+    if (isTokenValid !== true) return;
+    setPkgStatus('saving');
+    setPkgMessage('Fetching latest packages from GitHub...');
+    try {
+      const getRes = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/src/data/packages.json?ref=${targetBranch}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-store'
+      });
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        // Decode base64 content
+        const decodedContent = decodeURIComponent(escape(atob(getData.content)));
+        const parsed = JSON.parse(decodedContent);
+        if (parsed.packages) {
+          setPackages(parsed.packages);
+          setPkgStatus('success');
+          setPkgMessage('Packages refreshed successfully.');
+        }
+      } else {
+        setPkgStatus('error');
+        setPkgMessage('Failed to fetch latest packages.');
+      }
+    } catch (e: any) {
+      setPkgStatus('error');
+      setPkgMessage(e.message);
+    }
+  };
+
   const handleSavePackages = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isTokenValid !== true) return;
 
     setPkgStatus('saving');
     try {
-      const getRes = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/src/data/packages.json`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      const getRes = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/src/data/packages.json?ref=${targetBranch}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-store'
       });
       const getData = await getRes.json();
       let sha = '';
@@ -381,7 +428,7 @@ export default function AdminUpload() {
       const jsonStr = JSON.stringify({ packages }, null, 2);
       const base64String = btoa(new TextEncoder().encode(jsonStr).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
-      const putRes = await fetch(`https://api.github.com/repos/Avalanch22/glowandglamstudio/contents/src/data/packages.json`, {
+      const putRes = await fetch(`https://api.github.com/repos/XaviourZone/glowandglamstudio/contents/src/data/packages.json`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -391,14 +438,15 @@ export default function AdminUpload() {
         body: JSON.stringify({
           message: `Admin: Update packages.json`,
           content: base64String,
-          sha: sha || undefined
+          sha: sha || undefined,
+          branch: targetBranch
         })
       });
 
       const putData = await putRes.json();
       if (putRes.ok) {
         setPkgStatus('success');
-        setPkgMessage('Packages successfully saved to GitHub!');
+        setPkgMessage('Packages successfully saved! (Note: Changes take 1-3 minutes to appear on the live website.)');
       } else {
         setPkgStatus('error');
         setPkgMessage(`Failed to save: ${putData.message}`);
@@ -508,7 +556,7 @@ export default function AdminUpload() {
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="password"
                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
@@ -521,7 +569,7 @@ export default function AdminUpload() {
                 Check
               </Button>
             </div>
-            {isTokenValid === true && <p className="text-xs text-green-400 mt-2 pl-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Token is valid!</p>}
+            {isTokenValid === true && <p className="text-xs text-green-400 mt-2 pl-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Token is valid for main branch!</p>}
             {isTokenValid === false && <p className="text-xs text-red-400 mt-2 pl-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Invalid token or network error.</p>}
           </div>
 
@@ -593,11 +641,16 @@ export default function AdminUpload() {
               {/* Asset Manager: Upload View */}
               {assetView === 'upload' && (
                 <form onSubmit={handleUpload} className="space-y-6 max-w-xl mx-auto">
-                  <div className="flex items-center gap-4 mb-6">
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setAssetView('menu')} className="text-muted-foreground">
-                      <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                  <div className="flex items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setAssetView('menu')} className="text-muted-foreground hover:bg-transparent pl-0">
+                        <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                      </Button>
+                      <h2 className="text-lg font-display text-foreground">Upload New Asset</h2>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={fetchUploadFolderAssets} className="h-8 border-border/50 text-muted-foreground hover:text-foreground">
+                      <RefreshCw className="w-3 h-3 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Refresh</span>
                     </Button>
-                    <h2 className="text-lg font-display text-foreground">Upload New Asset</h2>
                   </div>
 
                   <div className="space-y-2">
@@ -633,6 +686,9 @@ export default function AdminUpload() {
                             placeholder="Custom name"
                             className="flex-1 h-9 bg-black/50 border border-border/30 rounded px-3 text-xs focus:border-primary/50 outline-none w-full"
                           />
+                          <button type="button" onClick={() => handleRemoveUploadFile(idx)} className="text-red-400 hover:text-red-300 p-2 ml-1" title="Remove file">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -663,14 +719,19 @@ export default function AdminUpload() {
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setAssetView('menu')} className="text-muted-foreground">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setAssetView('menu')} className="text-muted-foreground hover:bg-transparent pl-0">
                         <ArrowLeft className="w-4 h-4 mr-1" /> Back
                       </Button>
                       <h2 className="text-lg font-display text-foreground">Manage Existing Assets</h2>
                     </div>
-                    <select value={manageFolder} onChange={(e) => setManageFolder(e.target.value)} className="w-full sm:w-auto h-10 bg-black/40 border border-border/50 rounded-lg px-4 text-sm text-foreground focus:outline-none focus:border-primary/60 transition-all appearance-none cursor-pointer">
-                      {TARGET_FOLDERS.map((f) => <option key={f} value={f} className="bg-[#120F0D]">{f}</option>)}
-                    </select>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Button type="button" variant="outline" size="sm" onClick={fetchAssets} className="h-10 border-border/50 text-muted-foreground hover:text-foreground flex-shrink-0">
+                        <RefreshCw className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Refresh</span>
+                      </Button>
+                      <select value={manageFolder} onChange={(e) => setManageFolder(e.target.value)} className="w-full sm:w-auto h-10 bg-black/40 border border-border/50 rounded-lg px-4 text-sm text-foreground focus:outline-none focus:border-primary/60 transition-all appearance-none cursor-pointer">
+                        {TARGET_FOLDERS.map((f) => <option key={f} value={f} className="bg-[#120F0D]">{f}</option>)}
+                      </select>
+                    </div>
                   </div>
 
                   {/* Status Messages */}
@@ -752,9 +813,14 @@ export default function AdminUpload() {
           {currentView === 'packages' && (
             <form onSubmit={handleSavePackages} className="relative z-10 max-w-2xl mx-auto space-y-6">
               
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-display text-foreground">Package Manager</h2>
-                <p className="text-sm text-muted-foreground mt-1">Select a package to edit its details and features.</p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-display text-foreground">Package Manager</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Select a package to edit its details and features.</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={fetchPackagesData} className="h-10 border-border/50 text-muted-foreground hover:text-foreground flex-shrink-0 w-full sm:w-auto">
+                  <RefreshCw className="w-4 h-4 mr-2" /> Refresh Data
+                </Button>
               </div>
 
               <div className="space-y-3">
