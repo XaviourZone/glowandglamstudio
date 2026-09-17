@@ -22,19 +22,29 @@ function SparkleIcon({ className = '' }: { className?: string }) {
   );
 }
 
-// Direct cover image imports for collection cards
-import bridalCover from '@/assets/images/bridal/01-traditional-radiance.jpg';
-import receptionCover from '@/assets/images/reception/01-evening-luminous.jpg';
-import engagementCover from '@/assets/images/engagement/01-ethereal-rose.jpg';
-import hairCover from '@/assets/images/hairstyling/01-sculpted-waves.jpg';
-import partyCover from '@/assets/images/party/01-party-shimmer.jpg';
-import featuredCover from '@/assets/images/portfolio-featured/01-signature-bride.jpg';
+// Helper: format a filename into a readable title
+// e.g. '01-reception-glamour.webp' → 'Reception Glamour'
+function fileToTitle(filename: string): string {
+  return filename
+    .replace(/\.[^/.]+$/, '')      // strip extension
+    .replace(/^\d+-/, '')           // strip leading number prefix like '01-'
+    .replace(/-/g, ' ')             // dashes to spaces
+    .replace(/\b\w/g, c => c.toUpperCase()); // capitalize each word
+}
 
-// Eagerly import all gallery images
+// Eagerly import all gallery images and videos
 const galleryModules = import.meta.glob<{ default: string }>(
-  '/src/assets/images/*/*.{png,jpg,jpeg,webp}',
+  '/src/assets/images/*/*.{png,jpg,jpeg,webp,mp4,webm}',
   { eager: true }
 );
+
+// Helper: get the first image from a folder via the glob (for cover cards)
+function getCover(folder: string): string {
+  const match = Object.entries(galleryModules)
+    .filter(([p]) => p.includes(`/images/${folder}/`) && !p.endsWith('.mp4') && !p.endsWith('.webm'))
+    .sort(([a], [b]) => a.localeCompare(b))[0];
+  return match ? match[1].default : '';
+}
 
 interface Collection {
   id: string;
@@ -55,7 +65,7 @@ const COLLECTIONS: Collection[] = [
     subtitle: 'Premium',
     tag: 'Starting ₹10,000',
     description: 'HD / Airbrush foundation, full contouring, luxury lashes, and complete styling for your big day.',
-    cover: bridalCover,
+    cover: getCover('bridal'),
     Icon: CurlerIcon,
   },
   {
@@ -65,17 +75,17 @@ const COLLECTIONS: Collection[] = [
     subtitle: 'Evening',
     tag: 'Starting ₹8,000',
     description: 'HD makeup full look, eye-forward styling, and dramatic evening glamour.',
-    cover: receptionCover,
+    cover: getCover('reception'),
     Icon: BlushIcon,
   },
   {
     id: 'model-photoshoot',
-    folder: 'portfolio-featured',
+    folder: 'model-photoshoot',
     title: 'Model Photoshoot Makeover',
     subtitle: 'Editorial',
     tag: 'Starting ₹6,000',
     description: 'Camera-ready HD base, creative editorial styling, and multiple look transitions.',
-    cover: featuredCover,
+    cover: getCover('model-photoshoot'),
     Icon: SparkleIcon,
   },
   {
@@ -85,7 +95,7 @@ const COLLECTIONS: Collection[] = [
     subtitle: 'Event',
     tag: 'Starting ₹4,000',
     description: 'Dewy, sweat-proof base, soft contouring, and floral jewelry styling assistance.',
-    cover: engagementCover,
+    cover: getCover('engagement'),
     Icon: LipstickIcon,
   },
   {
@@ -95,7 +105,7 @@ const COLLECTIONS: Collection[] = [
     subtitle: 'Glamour',
     tag: 'Starting ₹3,000',
     description: 'Flawless event base, contouring, basic hairstyling, and lash application.',
-    cover: partyCover,
+    cover: getCover('party'),
     Icon: PaletteIcon,
   },
   {
@@ -105,141 +115,20 @@ const COLLECTIONS: Collection[] = [
     subtitle: 'À la carte',
     tag: 'Starting ₹2,000',
     description: 'Expert updos or textured waves, hair extension setting, and saree draping.',
-    cover: hairCover,
+    cover: getCover('hairstyling'),
     Icon: PerfumeIcon,
   },
 ];
 
-// Rich editorial titles and descriptions keyed by filename
-const PHOTO_METADATA: Record<string, { title: string; desc: string }> = {
-  // Bridal
-  '01-traditional-radiance.jpg': {
-    title: 'Royal Temple Muhurtham',
-    desc: 'Luminous HD airbrush base with traditional temple gold jewellery harmony.'
-  },
-  '02-hd-airbrush-bride.jpg': {
-    title: 'Featherlight HD Airbrush',
-    desc: 'Weightless micro-fine coverage designed for high-resolution morning ceremony photography.'
-  },
-  '03-bridal-portrait.jpg': {
-    title: 'Luminous Classic Bride',
-    desc: 'Warm terracotta undertones, sculpted eyes, and timeless understated grace.'
-  },
-  '04-royal-jewels-glam.jpg': {
-    title: 'Heirloom Antique Jewel Glam',
-    desc: 'Deep jewel-toned richness paired with seamless golden highlighter placement.'
-  },
-
-  // Reception
-  '01-evening-luminous.jpg': {
-    title: 'Golden Hour Reception Glow',
-    desc: 'Smokey eye architecture paired with velvet matte nude lips and high-beam highlight.'
-  },
-  '02-bold-reception.jpg': {
-    title: 'Midnight Gala Couture',
-    desc: 'Sculpted cheekbone architecture and sharp feline wing definition for reception evenings.'
-  },
-  '03-dramatic-contour.jpg': {
-    title: 'High-Beam Strobe Glamour',
-    desc: 'Engineered specifically for strobe and evening ballroom reception lighting.'
-  },
-  '04-night-glamour.jpg': {
-    title: 'Champagne Shimmer Radiance',
-    desc: 'Luminous dewy collarbones, glowing eyes, and velvety soft lips.'
-  },
-
-  // Engagement
-  '01-ethereal-rose.jpg': {
-    title: 'Blushing Rose Ethereal Glow',
-    desc: 'Romantic rose petal blush and micro-fine shimmer for intimate exchange of vows.'
-  },
-  '02-romantic-dew.jpg': {
-    title: 'Daylight Glass Skin',
-    desc: 'Natural sunlight perfection with dewy balmy highlights and petal lips.'
-  },
-  '03-subtle-glow.jpg': {
-    title: 'Pastel Ceremony Glow',
-    desc: 'Understated pastel elegance curated for daytime intimate vow exchanges.'
-  },
-  '04-timeless-elegance.jpg': {
-    title: 'Silk Organza Harmony',
-    desc: 'Warm champagne glow coordinated with pastel silk organza celebration attire.'
-  },
-
-  // Hairstyling
-  '01-sculpted-waves.jpg': {
-    title: 'Hollywood Textured Waves',
-    desc: 'Hollywood textured hair waves structured to hold movement without rigidity.'
-  },
-  '02-styling-detail.jpg': {
-    title: 'Intricate Braid Architecture',
-    desc: 'Modernized South Indian braid with micro-braids and pearl detailing.'
-  },
-  '03-floral-braid.jpg': {
-    title: 'Traditional Jasmine Crown',
-    desc: 'Fresh fragrant malli poo garland integration with contemporary structural flow.'
-  },
-  '04-modern-updo.jpg': {
-    title: 'Textured Low Chignon',
-    desc: 'Relaxed French-inspired low bridal bun with face-framing tendrils.'
-  },
-
-  // Party
-  '01-party-shimmer.jpg': {
-    title: 'Sangeet Celebration Sparkle',
-    desc: 'Sweat-proof, dance-floor-ready glitter pigments and long-wear radiance.'
-  },
-  '02-vibrant-glam.jpg': {
-    title: 'Cocktail Velvet Radiance',
-    desc: 'Bold lips with minimalist glowing base for high-energy cocktail nights.'
-  },
-  '03-blush-radiance.jpg': {
-    title: 'Sun-Kissed Golden Hour',
-    desc: 'Warm peachy monochrome glow across eyes, cheeks, and lips.'
-  },
-  '04-celebration-look.jpg': {
-    title: 'Contemporary Festive Glow',
-    desc: 'Vibrant, sweat-proof celebration makeup that stays radiant until sunrise.'
-  },
-
-  // Featured
-  '01-signature-bride.jpg': {
-    title: 'Signature Royal Bridal',
-    desc: 'Luminous HD airbrush base with traditional temple gold jewellery harmony.'
-  },
-  '02-reception-glam.jpg': {
-    title: 'Golden Hour Reception',
-    desc: 'Smokey eye architecture paired with velvet matte nude lips and high-beam highlight.'
-  },
-  '03-editorial-dewy.jpg': {
-    title: 'Minimalist Glass Skin',
-    desc: 'Ultra-dewy transfer-resistant finish designed for natural daylight clarity.'
-  },
-  '04-bold-couture.jpg': {
-    title: 'Couture Midnight Glam',
-    desc: 'Bold feline eye wings with metallic bronze pigments for evening galas.'
-  },
-  '05-festive-party.jpg': {
-    title: 'Sangeet Celebration',
-    desc: 'Vibrant celebration makeup that stays radiant throughout high energy dancing.'
-  },
-  '06-romantic-look.jpg': {
-    title: 'Romantic Ring Ceremony',
-    desc: 'Soft rose petal blush and micro-fine shimmer for intimate exchange of vows.'
-  },
-  '07-sculpted-waves.jpg': {
-    title: 'Sculptural Mermaid Waves',
-    desc: 'Hollywood textured hair waves structured to hold movement without rigidity.'
-  },
-  '08-golden-glow.jpg': {
-    title: 'Terracotta Sunset Glow',
-    desc: 'Warm bronze tones capturing the golden hour glow of South Indian brides.'
-  },
-};
-
 export function Portfolio() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('bridal-makeover');
   const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const PAGE_SIZE = 8;
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedCollectionId]);
 
   const activeCollection = useMemo(() => {
     return COLLECTIONS.find((c) => c.id === selectedCollectionId) || COLLECTIONS[0];
@@ -253,17 +142,15 @@ export function Portfolio() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([path, mod]) => {
         const filename = path.split('/').pop() || '';
-        const meta = PHOTO_METADATA[filename] || {
-          title: filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' '),
-          desc: 'Signature bespoke artistry by Glow & Glam Studio.',
-        };
+        const ext = filename.split('.').pop()?.toLowerCase() || '';
+        const isVideo = ['mp4', 'webm'].includes(ext);
         return {
           src: mod.default,
           path,
           filename,
-          title: meta.title,
-          desc: meta.desc,
+          title: fileToTitle(filename),
           collection: activeCollection.title,
+          isVideo,
         };
       });
   }, [activeCollection]);
@@ -434,32 +321,54 @@ export function Portfolio() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"
+                  className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6"
                 >
-                  {currentPhotos.map((photo, idx) => (
+                  {currentPhotos.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE).map((photo, idx) => {
+                    const globalIdx = currentPage * PAGE_SIZE + idx;
+                    return (
                     <motion.div
                       key={photo.path}
                       initial={{ opacity: 0, scale: 0.96 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.4, delay: idx * 0.05 }}
-                      onClick={() => setActivePhotoIndex(idx)}
+                      onClick={() => setActivePhotoIndex(globalIdx)}
                       className="group relative rounded-xl overflow-hidden bg-card/40 border border-border/40 hover:border-primary/70 transition-all duration-500 hover:shadow-[0_12px_36px_hsl(28_55%_58%/0.2)] cursor-pointer flex flex-col"
                     >
-                      {/* Photo Image with 4:5 Aspect Ratio */}
+                      {/* Photo/Video with 4:5 Aspect Ratio */}
                       <div className="relative aspect-[4/5] w-full overflow-hidden bg-black/40">
-                        <img
-                          src={photo.src}
-                          alt={photo.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
-                        />
+                        {photo.isVideo ? (
+                          <video
+                            src={photo.src}
+                            preload="none"
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+                            onMouseEnter={(e) => { try { (e.target as HTMLVideoElement).play(); } catch {} }}
+                            onMouseLeave={(e) => { try { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; } catch {} }}
+                          />
+                        ) : (
+                          <img
+                            src={photo.src}
+                            alt={photo.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+                          />
+                        )}
                         {/* Shimmer gradient overlay on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/25 to-transparent opacity-60 group-hover:opacity-85 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/25 to-transparent opacity-60 group-hover:opacity-85 transition-opacity duration-300 pointer-events-none" />
 
-                        {/* Top-Right Expand Button Badge */}
-                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/70 backdrop-blur-md border border-white/15 flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 shadow-md">
-                          <span className="text-sm font-semibold">⤢</span>
-                        </div>
+                        {/* Video Play Icon / Expand Badge */}
+                        {photo.isVideo ? (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-md border-2 border-white/30 flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-primary/80 transition-all duration-300">
+                              <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/70 backdrop-blur-md border border-white/15 flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 shadow-md">
+                            <span className="text-sm font-semibold">⤢</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Photo Caption Container */}
@@ -471,22 +380,50 @@ export function Portfolio() {
                           <h4 className="font-display text-base font-normal text-foreground group-hover:text-primary transition-colors mb-1.5 leading-snug">
                             {photo.title}
                           </h4>
-                          <p className="text-xs text-muted-foreground font-light leading-relaxed line-clamp-2">
-                            {photo.desc}
-                          </p>
                         </div>
 
                         <div className="mt-3 pt-2.5 border-t border-border/20 flex items-center justify-between text-xs text-primary/90 font-medium">
                           <span className="text-[11px] group-hover:translate-x-0.5 transition-transform duration-300">
-                            Enlarge Photo →
+                            {photo.isVideo ? 'Play Video →' : 'Enlarge Photo →'}
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-light">HD Airbrush</span>
+                          <span className="text-[10px] text-muted-foreground font-light">{photo.isVideo ? 'Video' : ''}</span>
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                  )})}
                 </motion.div>
               </AnimatePresence>
+
+              {/* Pagination Controls */}
+              {currentPhotos.length > PAGE_SIZE && (
+                <div className="mt-12 flex items-center justify-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    className="group border-primary/20 hover:border-primary/50 text-primary rounded-full px-6"
+                  >
+                    <span className="mr-2 group-hover:-translate-x-1 transition-transform inline-block">←</span>
+                    Previous
+                  </Button>
+                  
+                  <span className="text-sm text-muted-foreground font-medium px-4">
+                    Page {currentPage + 1} of {Math.ceil(currentPhotos.length / PAGE_SIZE)}
+                  </span>
+
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    disabled={(currentPage + 1) * PAGE_SIZE >= currentPhotos.length}
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                    className="group border-primary/20 hover:border-primary/50 text-primary rounded-full px-6"
+                  >
+                    Next
+                    <span className="ml-2 group-hover:translate-x-1 transition-transform inline-block">→</span>
+                  </Button>
+                </div>
+              )}
             </section>
         </div>
       </section>
@@ -511,13 +448,23 @@ export function Portfolio() {
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-5xl max-h-[92vh] bg-card/90 border border-primary/40 rounded-2xl overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex flex-col md:flex-row"
             >
-              {/* Image Preview Side */}
+              {/* Image/Video Preview Side */}
               <div className="relative flex-1 bg-black/80 flex items-center justify-center min-h-[300px] md:min-h-[560px] overflow-hidden">
-                <img
-                  src={currentPhotos[activePhotoIndex].src}
-                  alt={currentPhotos[activePhotoIndex].title}
-                  className="max-h-[50vh] md:max-h-[85vh] w-auto max-w-full object-contain mx-auto"
-                />
+                {currentPhotos[activePhotoIndex].isVideo ? (
+                  <video
+                    src={currentPhotos[activePhotoIndex].src}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-h-[50vh] md:max-h-[85vh] w-auto max-w-full object-contain mx-auto"
+                  />
+                ) : (
+                  <img
+                    src={currentPhotos[activePhotoIndex].src}
+                    alt={currentPhotos[activePhotoIndex].title}
+                    className="max-h-[50vh] md:max-h-[85vh] w-auto max-w-full object-contain mx-auto"
+                  />
+                )}
 
                 {/* Lightbox Navigation Buttons */}
                 <button
@@ -563,9 +510,6 @@ export function Portfolio() {
                   <h3 className="font-display text-2xl font-light text-foreground mb-3 leading-tight">
                     {currentPhotos[activePhotoIndex].title}
                   </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground font-light leading-relaxed mb-6">
-                    {currentPhotos[activePhotoIndex].desc}
-                  </p>
 
                   <div className="space-y-2 py-4 border-y border-border/30 text-xs">
                     <div className="flex justify-between text-muted-foreground font-light">

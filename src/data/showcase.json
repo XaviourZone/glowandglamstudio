@@ -2,28 +2,28 @@
   "homepageShowcase": [
     {
       "id": "1",
-      "image": "01-bridal-radiance.jpg",
+      "image": "01-bridal-radiance.webp",
       "tag": "Bridal Couture",
       "title": "Signature Bridal Radiance",
       "subtitle": "Exquisite HD airbrush finish sculpted for sacred morning rituals and timeless photographs."
     },
     {
       "id": "2",
-      "image": "02-evening-glam.jpg",
+      "image": "02-evening-glam.webp",
       "tag": "Evening Luxury",
       "title": "Luminous Reception",
       "subtitle": "Sculpted glamour designed for flash photography, celebration dance floors, and radiant evenings."
     },
     {
       "id": "3",
-      "image": "03-dewy-perfection.jpg",
+      "image": "03-dewy-perfection.webp",
       "tag": "Editorial",
       "title": "Dewy Glass Skin",
       "subtitle": "Minimalist editorial look prioritizing natural skin glow, subtle rosiness, and quiet restraint."
     },
     {
       "id": "4",
-      "image": "04-hair-artistry.jpg",
+      "image": "04-hair-artistry.webp",
       "tag": "Hairstyling",
       "title": "Architectural Hair & Draping",
       "subtitle": "Sculptural textured waves, floral hair architecture, and flawless traditional saree draping."
@@ -32,21 +32,21 @@
   "aboutStudioMoments": [
     {
       "id": "1",
-      "image": "01-brushes-craft.jpg",
+      "image": "01-brushes-craft.webp",
       "tag": "Craftsmanship",
       "title": "Precision Brushes & Tools",
       "subtitle": "Curated luxury natural bristle brushes and airbrush equipment calibrated for featherlight touch."
     },
     {
       "id": "2",
-      "image": "02-studio-glow.jpg",
+      "image": "02-studio-glow.webp",
       "tag": "Studio Ambience",
       "title": "Atmosphere of Calm",
       "subtitle": "Warm Hollywood vanity lighting and a serene studio designed for mindful bridal preparations."
     },
     {
       "id": "3",
-      "image": "03-artist-touch.jpg",
+      "image": "03-artist-touch.webp",
       "tag": "Master Artistry",
       "title": "The Master Touch",
       "subtitle": "Every contour intentional and anatomical, ensuring beauty that lasts flawlessly through tears and dancing."

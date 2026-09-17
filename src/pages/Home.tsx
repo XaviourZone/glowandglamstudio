@@ -9,10 +9,10 @@ import {
   BlushIcon
 } from "@/components/StudioEffects";
 
-import galleryCover from '@/assets/images/hero/01-bridal-radiance.jpg';
-import packagesCover from '@/assets/images/hero/02-evening-glam.jpg';
-import aboutCover from '@/assets/images/about/02-studio-glow.jpg';
-import bookCover from '@/assets/images/hero/03-dewy-perfection.jpg';
+import galleryCover from '@/assets/images/hero/01-bridal-radiance.webp';
+import packagesCover from '@/assets/images/hero/02-evening-glam.webp';
+import aboutCover from '@/assets/images/about/02-studio-glow.webp';
+import bookCover from '@/assets/images/hero/03-dewy-perfection.webp';
 
 const NAV_CARDS = [
   {

@@ -8,7 +8,7 @@ export function useGalleryImages(category: string) {
   return Object.entries(modules)
     // Filter down to the requested category folder
     .filter(([path]) => path.includes(`/gallery/${category}/`))
-    // Sort alphabetically by filename (so 01-img.jpg comes before 02-img.jpg)
+    // Sort alphabetically by filename (so 01-img.webp comes before 02-img.webp)
     .sort(([a], [b]) => a.localeCompare(b))
     // Map to the object shape expected by our Masonry component
     .map(([path, src]) => ({ src: src as string, path }));

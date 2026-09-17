@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import portfolioData from "@/data/portfolio.json";
 
 declare const gsap: any;
 declare const THREE: any;
@@ -8,6 +7,25 @@ const imageModules = import.meta.glob<string>(
   '/src/assets/images/portfolio-featured/*.{jpg,jpeg,png,webp}',
   { eager: true, import: 'default' }
 );
+
+// Dynamically build slides from whatever images are in portfolio-featured
+function buildSlides() {
+  return Object.entries(imageModules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([path, src]) => {
+      const filename = path.split('/').pop() || '';
+      const title = filename
+        .replace(/\.[^/.]+$/, '')
+        .replace(/^\d+-/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+      return {
+        title,
+        description: 'Signature bespoke artistry by Glow & Glam Studio.',
+        media: src,
+      };
+    });
+}
 
 export function WebGLPortfolioCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,17 +89,7 @@ export function WebGLPortfolioCarousel() {
         const PROGRESS_UPDATE_INTERVAL = 50;
         const TRANSITION_DURATION = () => SLIDER_CONFIG.settings.transitionDuration;
 
-        const resolveImage = (filename: string) => {
-            const found = Object.entries(imageModules).find(([path]) => path.includes(filename));
-            return found ? found[1] : `/src/assets/images/portfolio-featured/${filename}`;
-        };
-        
-        const portfolio = portfolioData.portfolio as any[];
-        const slides = portfolio.map(item => ({
-            title: item.title,
-            description: item.description || item.tag,
-            media: resolveImage(item.image)
-        }));
+        const slides = buildSlides();
 
         // --- SHADERS ---
         const vertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;

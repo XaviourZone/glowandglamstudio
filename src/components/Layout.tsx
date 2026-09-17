@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import logoImg from '@/assets/images/logo.jpg';
+import logoImg from '@/assets/images/logo.webp';
 import { cn } from '@/lib/utils';
 import { Spotlight, DustParticles } from './StudioEffects';
 import '../studio.css';

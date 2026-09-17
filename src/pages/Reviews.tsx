@@ -17,7 +17,7 @@ import {
 
 // Load review avatars dynamically
 const avatarModules = import.meta.glob<string>(
-  '/src/assets/images/reviews/*.{jpg,jpeg,png,webp}',
+  '/src/assets/images/model-photoshoot/*.{jpg,jpeg,png,webp}',
   { eager: true, import: 'default' }
 );
 const avatarUrls = Object.values(avatarModules);

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import portfolioData from "@/data/portfolio.json";
 import { BrushIcon } from "./StudioEffects";
 import { Masonry } from "./ui/masonry";
 import { cn } from "@/lib/utils";
@@ -12,15 +11,35 @@ const imageModules = import.meta.glob<string>(
 
 export interface PortfolioItem {
   id: string;
-  image: string;
+  src: string;
   tag: string;
   title: string;
-  category: string;
   description: string;
 }
 
+// Dynamically build portfolio items from folder contents
+function buildPortfolioItems(): PortfolioItem[] {
+  return Object.entries(imageModules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([path, src], idx) => {
+      const filename = path.split('/').pop() || '';
+      const title = filename
+        .replace(/\.[^/.]+$/, '')
+        .replace(/^\d+-/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+      return {
+        id: String(idx + 1),
+        src,
+        tag: 'Featured',
+        title,
+        description: 'Signature bespoke artistry by Glow & Glam Studio.',
+      };
+    });
+}
+
 export function CylindricalGallery() {
-  const portfolio = portfolioData.portfolio as PortfolioItem[];
+  const portfolio = buildPortfolioItems();
 
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -34,13 +53,7 @@ export function CylindricalGallery() {
 
   const count = portfolio.length;
   const angleStep = 360 / count;
-  const radius = 460; // 3D cylinder radius in pixels
-
-  // Helper to resolve image URL
-  const resolveImage = (filename: string) => {
-    const found = Object.entries(imageModules).find(([path]) => path.includes(filename));
-    return found ? found[1] : `/src/assets/images/portfolio-featured/${filename}`;
-  };
+  const radius = 460;
 
   // Continuous gentle 3D auto-spin when idle
   useEffect(() => {
@@ -194,14 +207,13 @@ export function CylindricalGallery() {
           >
             {portfolio.map((item, idx) => {
               const cardAngle = idx * angleStep;
-              const imageUrl = resolveImage(item.image);
 
               return (
                 <div
                   key={item.id}
                   onClick={() =>
                     setSelectedItem({
-                      src: imageUrl,
+                      src: item.src,
                       title: item.title,
                       tag: item.tag,
                       desc: item.description,
@@ -214,7 +226,7 @@ export function CylindricalGallery() {
                   }}
                 >
                   <img
-                    src={imageUrl}
+                    src={item.src}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     loading="lazy"
@@ -257,10 +269,9 @@ export function CylindricalGallery() {
         <div className="container mx-auto px-6">
           <Masonry
             images={portfolio.map((item) => ({
-              src: resolveImage(item.image),
+              src: item.src,
               alt: item.title,
-            }))}
-          />
+            }))}          />
         </div>
       )}
 
